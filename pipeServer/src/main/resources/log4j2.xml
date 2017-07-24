@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="info">
+	<properties>
+		<property name="LOG_ROOT">${web:rootDir}/../../logs/data_import_srv</property>
+		<property name="LogVisitor">visitor</property>
+		<property name="LogInfo">info</property>
+		<property name="LogError">error</property>
+
+	</properties>
+	<Appenders>
+		<Console name="Console" target="SYSTEM_OUT">
+			<PatternLayout
+				pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} [%3L] - %msg%n" />
+		</Console>
+		<RollingRandomAccessFile name="Error"
+			fileName="${LOG_ROOT}/${LogError}.log" filePattern="${LOG_ROOT}/$${date:yyyy-MM}/${LogError}-%d{dd}-%i.log">
+			<PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%20t] [%.30C-%3L] - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" />
+				<SizeBasedTriggeringPolicy size="500 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+		<RollingRandomAccessFile name="Info"
+			fileName="${LOG_ROOT}/${LogInfo}.log" filePattern="${LOG_ROOT}/$${date:yyyy-MM}/${LogInfo}-%d{dd}-%i.log">
+			<PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%20t] [%.30C-%3L] - %m%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" />
+				<SizeBasedTriggeringPolicy size="500 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+		<RollingRandomAccessFile name="Visitor"
+			fileName="${LOG_ROOT}/${LogVisitor}.log" filePattern="${LOG_ROOT}/$${date:yyyy-MM}/${LogVisitor}-%d{dd}-%i.log">
+			<PatternLayout pattern="[%d{HH:mm:ss.SSS}] [%t] - [%msg]%n" />
+			<Policies>
+				<TimeBasedTriggeringPolicy interval="1" />
+				<SizeBasedTriggeringPolicy size="10 MB" />
+			</Policies>
+			<DefaultRolloverStrategy max="20" />
+		</RollingRandomAccessFile>
+	</Appenders>
+	<Loggers>
+		<Root level="info">
+			<AppenderRef ref="Console" />
+		</Root>
+
+		<Logger name="dmp.visitor" level="info">
+			<AppenderRef ref="Visitor" />
+		</Logger>
+
+		<Logger name="dmp.info" level="info">
+			<AppenderRef ref="Info" />
+		</Logger>
+
+		<Logger name="dmp.error" level="info">
+			<AppenderRef ref="Error" />
+		</Logger>
+	</Loggers>
+</Configuration>

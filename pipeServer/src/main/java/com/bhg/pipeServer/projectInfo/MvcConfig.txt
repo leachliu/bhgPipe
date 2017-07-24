@@ -1,0 +1,115 @@
+package com.bhg.pipeServer.projectInfo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ResourceBundleMessageSource;
+import org.springframework.web.servlet.HandlerAdapter;
+import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
+import org.springframework.web.servlet.handler.SimpleServletHandlerAdapter;
+import org.springframework.web.servlet.i18n.CookieLocaleResolver;
+import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.springframework.web.servlet.view.InternalResourceViewResolver;
+
+import com.bhg.pipeServer.interceptor.ExceptionIngerceptor;
+import com.bhg.pipeServer.interceptor.RequestInterceptor;
+
+//@Configuration
+//@EnableWebMvc
+//@ComponentScan(basePackages = "com.bhg.pipeServer")
+public class MvcConfig extends WebMvcConfigurationSupport {
+
+	private static final Logger logger = LoggerFactory.getLogger(MvcConfig.class);
+
+	@Bean
+	public InternalResourceViewResolver internalResourceViewResolver() {
+		InternalResourceViewResolver viewResolver = new InternalResourceViewResolver();
+		viewResolver.setPrefix("/WEB-INF/jsp/");
+		viewResolver.setSuffix(".jsp");
+		return viewResolver;
+	}
+
+	@Bean
+	public MessageSource messageSource() {
+		logger.info("MessageSource");
+		ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+		messageSource.setBasename("config.messages.messages");
+
+		return messageSource;
+	}
+
+	@Bean
+	public HandlerAdapter servletHandlerAdapter() {
+		logger.info("HandlerAdapter");
+		return new SimpleServletHandlerAdapter();
+	}
+
+	@Bean
+	public LocaleChangeInterceptor localeChangeInterceptor() {
+		logger.info("LocaleChangeInterceptor");
+		return new LocaleChangeInterceptor();
+	}
+
+	@Bean(name = "localeResolver")
+	public CookieLocaleResolver cookieLocaleResolver() {
+		logger.info("CookieLocaleResolver");
+		return new CookieLocaleResolver();
+	}
+
+	@Bean
+	public RequestInterceptor initializingInterceptor() {
+		logger.info("ActionInterceptor");
+		return new RequestInterceptor();
+	}
+
+	@Bean
+	public RequestMappingHandlerMapping requestMappingHandlerMapping() {
+		logger.info("RequestMappingHandlerMapping");
+
+		return super.requestMappingHandlerMapping();
+	}
+
+	@Override
+	protected void addInterceptors(InterceptorRegistry registry) {
+		// TODO Auto-generated method stub
+		logger.info("addInterceptors start");
+		registry.addInterceptor(localeChangeInterceptor());
+		registry.addInterceptor(initializingInterceptor());
+		logger.info("addInterceptors end");
+	}
+
+	@Bean
+	public HandlerMapping resourceHandlerMapping() {
+		logger.info("HandlerMapping");
+		return super.resourceHandlerMapping();
+	}
+
+	@Override
+	protected void addResourceHandlers(ResourceHandlerRegistry registry) {
+		logger.info("addResourceHandlers");
+		registry.addResourceHandler("/static/**").addResourceLocations("/WEB-INF/static/");
+	}
+	
+    @Bean(name="exceptionResolver")  
+    public ExceptionIngerceptor simpleMappingExceptionResolver(){  
+        logger.info("CP_SimpleMappingExceptionResolver");  
+        ExceptionIngerceptor simpleMappingExceptionResolver= new ExceptionIngerceptor();  
+        return simpleMappingExceptionResolver;  
+    }  
+    
+    @Bean  
+    public RequestMappingHandlerAdapter requestMappingHandlerAdapter() {  
+        logger.info("RequestMappingHandlerAdapter");  
+        return super.requestMappingHandlerAdapter();  
+    }  
+    
+}
