@@ -2,52 +2,27 @@ package bhg.posSite;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import com.bhg.pipeServer.vo.SchemaVo;
+import com.bhg.pipeServer.vo.SiteConfigVo;
 import com.bhg.pipeServer.vo.SiteVo;
 
-public abstract class AbstractPipeSite implements IPipeSite {
+public class PipeSite implements IPipeSite {
 	private Map<String, ISiteReceiveListener> receiveSchemas;
 	private Map<String, ISiteSendListener> sendSchemas;
 	private String siteKey;
 	private URI pipeServerUri = URI.create("http://localhost:8080/pipeServer/");
 	private List<SchemaVo> schemas;
 	private List<SiteVo> sites;
+	private IMessagePipe pipe;
+	private SiteConfigVo siteConfig;
 
 	// 数据发送队列
 	LinkedBlockingQueue<PipeMessage<IMessageBody>> sendQueue;
-
-	/**
-	 * 发送消息
-	 * 
-	 * @param msg
-	 *            消息
-	 * @throws PipeException
-	 * 
-	 * @param site
-	 *            站点
-	 * @throws PipeException
-	 */
-	abstract void sendMsg(PipeMessage<IMessageBody> msg, String site) throws PipeException;
-
-	/**
-	 * 消息的消费确认
-	 * 
-	 * @param msg消息
-	 * @throws PipeException
-	 */
-	abstract void ackMsg(PipeMessage<IMessageBody> msg) throws PipeException;
-
-	/**
-	 * 同步接收消息
-	 * 
-	 * @return 接收到的消息
-	 * @throws PipeException
-	 */
-	abstract PipeMessage<IMessageBody> receiveMsg() throws PipeException;
 
 	/**
 	 * 连接消息接收器
@@ -58,7 +33,7 @@ public abstract class AbstractPipeSite implements IPipeSite {
 				@Override
 				public void run() {
 					while (true) {
-						PipeMessage<IMessageBody> msg = receiveMsg();
+						PipeMessage<IMessageBody> msg = pipe.receiveMsg();
 						String schema = msg.getSchema();
 						IMessageBody msgBody = msg.getMsg();
 						// 消息校验(如果schema不匹配,那么从服务器更新最新的元数据)
@@ -71,7 +46,7 @@ public abstract class AbstractPipeSite implements IPipeSite {
 							}
 						});
 						// 确认消息
-						ackMsg(msg);
+						pipe.ackMsg(msg);
 					}
 				}
 			});
@@ -122,7 +97,7 @@ public abstract class AbstractPipeSite implements IPipeSite {
 								String schema = msg.getSchema();
 								List<String> sites = routing(receiver, schema);
 								for (String site : sites) {
-									sendMsg(msg, site);
+									pipe.sendMsg(msg, site);
 								}
 								// TODO: 从日志中删除
 								msg.delete();
@@ -164,11 +139,13 @@ public abstract class AbstractPipeSite implements IPipeSite {
 		PipeServerCenter server = PipeServerCenter.connect(this.pipeServerUri.toString());
 		this.schemas = server.getSchemas();
 		this.sites = server.getSites();
+		this.siteConfig = server.getSiteConfig();
+		this.pipe = new KafkaMessagePipe(this.siteConfig);
 		return true;
 	}
 
 	@Override
-	public List<SchemaInfo> getSchemas() throws PipeException {
+	public List<SchemaVo> getSchemas() throws PipeException {
 		System.out.println(this.schemas);
 		return null;
 	}
@@ -187,5 +164,40 @@ public abstract class AbstractPipeSite implements IPipeSite {
 		}
 		sendQueue.add(message);
 		return message.getKey();
+	}
+
+	public static void main(String[] args) {
+		IPipeSite site = new PipeSite();
+		site.getSchemas();
+		if (true) {
+			return;
+		}
+		Map<String, ISiteSendListener> sendCallbacks = new HashMap<String, ISiteSendListener>();
+		// 商品表
+		sendCallbacks.put("ITEM", new ISiteSendListener() {
+
+			@Override
+			public void onDataSendSucess(String msgId) {
+				System.out.println(msgId + "send success");
+			}
+
+			@Override
+			public void onDataSendFailure(String msgId, String errorMessage) {
+				System.out.println(msgId + "send failure");
+			}
+		});
+		site.connect(null, sendCallbacks);
+		System.out.println("begin send");
+		for (int i = 0; i < 100; i++) {
+			SchemaItem item = new SchemaItem();
+			item.setName("item" + i);
+			item.setContext(i);
+			System.out.println(site.sendData("SchemaItem", "mom_statistic", item));
+		}
+	}
+
+	@Override
+	public SiteStatus getStatus() {
+		return null;
 	}
 }

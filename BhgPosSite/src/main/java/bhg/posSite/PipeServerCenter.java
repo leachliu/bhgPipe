@@ -17,6 +17,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 import com.bhg.pipeServer.vo.SchemaVo;
+import com.bhg.pipeServer.vo.SiteConfigVo;
 import com.bhg.pipeServer.vo.SiteVo;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -44,6 +45,10 @@ public class PipeServerCenter {
 		return SERVER_ADDERSS + "sites";
 	}
 
+	private String getSiteConfigAddress() {
+		return SERVER_ADDERSS + "kafkaConfig";
+	}
+
 	public List<SchemaVo> getSchemas() {
 		String json = loadJson(get(getSchemasAddress() + ".json"));
 		Gson gson = new Gson();
@@ -56,6 +61,12 @@ public class PipeServerCenter {
 		Gson gson = new Gson();
 		return gson.fromJson(json, new TypeToken<List<SiteVo>>() {
 		}.getType());
+	}
+
+	public SiteConfigVo getSiteConfig() {
+		String json = loadJson(get(getSiteConfigAddress() + ".json"));
+		Gson gson = new Gson();
+		return gson.fromJson(json, SiteConfigVo.class);
 	}
 
 	private HttpResponse get(String url) throws PipeException {

@@ -4,6 +4,8 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
+import com.bhg.pipeServer.vo.SchemaVo;
+
 /**
  * １．站点初始化:设置站点的Key,以及服务器地址． ２．服务连接
  * 
@@ -98,7 +100,7 @@ public interface IPipeSite {
 	 * 
 	 * @return
 	 */
-	List<SchemaInfo> getSchemas() throws PipeException;
+	List<SchemaVo> getSchemas() throws PipeException;
 
 	/**
 	 * 发送数据，Site负责生成消息的唯一Id,规则：至少包含发送方站点ID和接口调用时间，同时保证唯一性．
